@@ -10,8 +10,10 @@ import com.opensymphony.xwork2.ActionSupport;
  */
 @CallChain
 public class HelloAction extends ActionSupport{
-    public String hello(){
+    public String hello() throws InterruptedException {
+        Thread.sleep(10L);
         new HelloService().sayHello();
-        return "hello";
+        new HelloService().sayBye();
+        return SUCCESS;
     }
 }

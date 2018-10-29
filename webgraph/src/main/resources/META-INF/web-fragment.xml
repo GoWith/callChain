@@ -5,7 +5,7 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
               version="3.0">
-    <name>javamelody</name>
+    <name>callTree</name>
     <distributable />
     <filter>
         <filter-name>callTree</filter-name>
@@ -17,5 +17,8 @@
         <url-pattern>/callChain/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
         <dispatcher>ASYNC</dispatcher>
+        <dispatcher>ERROR</dispatcher>
+        <dispatcher>INCLUDE</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
     </filter-mapping>
 </web-fragment>

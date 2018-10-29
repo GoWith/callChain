@@ -41,8 +41,7 @@ public class WebFilter implements Filter{
 
         response.setCharacterEncoding("utf-8");
 
-//        String uriValue = requestURI.substring(10);
-        String uriValue = requestURI;
+        String uriValue = requestURI.substring(10);
 
         if("".equalsIgnoreCase(uriValue) || "/".equalsIgnoreCase(uriValue)){
             response.sendRedirect("/callChain/resource/index.html");
@@ -53,12 +52,6 @@ public class WebFilter implements Filter{
             contextPath = "";
         }
 
-//        if("callTree".equalsIgnoreCase(pathInfo)){
-//            String key = (String) parameterMap.get("key");
-//            ConcurrentHashMap<String, CallTree> graph = LogGraph.graph;
-//            CallTree callTree = graph.get(key);
-//
-//        }
         if (uriValue.contains(".json")) {
             ConcurrentHashMap<String, CallTree> graph = LogGraph.graph;
             String key = "";
@@ -66,7 +59,10 @@ public class WebFilter implements Filter{
                 key = entry.getKey();
             }
             CallTree callTree = graph.get(key);
-            TreeView parse = parse(callTree.getRoot());
+            TreeView parse = null;
+            if (callTree !=null) {
+                parse = parse(callTree.getRoot());
+            }
             response.getWriter().print(JSON.toJSONString(parse));
             return;
         }
@@ -81,8 +77,11 @@ public class WebFilter implements Filter{
     private TreeView parse(CallNode node){
         if(node == null){return null;}
         TreeView view = new TreeView();
-        view.setName(node.getKey());
         view.setValue(node.getCallInfo().getGapTime());
+        String key1 = node.getKey();
+        String[] split = key1.split("\\.");
+        String key = "["+split[split.length-2]+"."+split[split.length-1]+":"+view.getValue()+"]";
+        view.setName(key);
         List<TreeView> treeViews =null;
         if (node.getChildList()!=null) {
             treeViews =  new ArrayList<>();
@@ -95,7 +94,7 @@ public class WebFilter implements Filter{
     }
 
 
-    protected static final String RESOURCE_PATH = "callChain/resource";
+    protected static final String RESOURCE_PATH = "/resource";
 
     protected String getFilePath(String fileName) {
         return RESOURCE_PATH + fileName;
@@ -107,6 +106,9 @@ public class WebFilter implements Filter{
 
 //        String filePath = getFilePath(fileName);
         String filePath = uri;
+        if (!filePath.startsWith("/resource")) {
+            filePath = getFilePath(filePath);
+        }
 
         if (filePath.endsWith(".html")) {
             response.setContentType("text/html; charset=utf-8");

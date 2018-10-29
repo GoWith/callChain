@@ -8,7 +8,12 @@ import cn.fireface.call.core.proxy.CallChain;
  */
 @CallChain
 public class HelloManager {
-    public void sayHello(){
+    public void sayHello() throws InterruptedException {
+        Thread.sleep(10L);
         System.out.println("hello manager say : hello");
+    }
+    public void sayBye() throws InterruptedException {
+        Thread.sleep(10L);
+        System.out.println("hello manager say : bye");
     }
 }
