@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 引入 ECharts 文件 -->
+    <script src="/callChain/resource/js/echarts.min.js"></script>
+    <script src="/callChain/resource/js/jquery.min.js"></script>
+    <script src="/callChain/resource/js/esl.js"></script>
+    <script src="/callChain/resource/js/config.js"></script>
+</head>
+<body>
+<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+<style>
+    html, body, #main {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        height: 100%;
+    }
+</style>
+<div id="main"></div>
+</body>
+</html>
+<script>
+    var myChart = echarts.init(document.getElementById('main'));
+    myChart.showLoading();
+//    $.get('callTree.json', function (data) {
+    $.getJSON('callTree.json')
+        .done(function (data) {
+        myChart.hideLoading();
+        myChart.setOption(option = {
+            tooltip: {
+                trigger: 'item',
+                triggerOn: 'mousemove'
+            },
+            series:[
+                {
+                    type: 'tree',
+
+                    data: [data],
+
+                    left: '2%',
+                    right: '2%',
+                    top: '8%',
+                    bottom: '20%',
+
+                    symbol: 'emptyCircle',
+
+                    orient: 'vertical',
+
+                    expandAndCollapse: true,
+
+                    label: {
+                        normal: {
+                            position: 'top',
+                            rotate: -90,
+                            verticalAlign: 'middle',
+                            align: 'right',
+                            fontSize: 9
+                        }
+                    },
+
+                    leaves: {
+                        label: {
+                            normal: {
+                                position: 'bottom',
+                                rotate: -90,
+                                verticalAlign: 'middle',
+                                align: 'left'
+                            }
+                        }
+                    },
+
+                    animationDurationUpdate: 750
+                }
+            ]
+        });
+    });
+
+</script>
