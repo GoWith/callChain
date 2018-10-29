@@ -27,53 +27,56 @@
 <script>
     var myChart = echarts.init(document.getElementById('main'));
     myChart.showLoading();
-//    $.get('callTree.json', function (data) {
+    //    $.get('callTree.json', function (data) {
     $.getJSON('callTree.json')
         .done(function (data) {
-        myChart.hideLoading();
+            myChart.hideLoading();
             myChart.setOption(option = {
                 tooltip: {
                     trigger: 'item',
                     triggerOn: 'mousemove'
                 },
-                series: [
+                series:[
                     {
                         type: 'tree',
 
                         data: [data],
 
-                        top: '1%',
-                        left: '20%',
-                        bottom: '1%',
-                        right: '20%',
+                        left: '2%',
+                        right: '2%',
+                        top: '8%',
+                        bottom: '20%',
 
-                        symbolSize: 7,
+                        symbol: 'emptyCircle',
+
+                        orient: 'vertical',
+
+                        expandAndCollapse: true,
 
                         label: {
-                            normal: {
-                                position: 'left',
-                                verticalAlign: 'middle',
-                                align: 'right',
-                                fontSize: 9
-                            }
+                        normal: {
+                            position: 'top',
+                            rotate: -90,
+                            verticalAlign: 'middle',
+                            align: 'right',
+                            fontSize: 9
+                        }
                         },
 
                         leaves: {
                             label: {
-                                normal: {
-                                    position: 'right',
-                                    verticalAlign: 'middle',
-                                    align: 'left'
-                                }
+                            normal: {
+                                position: 'bottom',
+                                rotate: -90,
+                                verticalAlign: 'middle',
+                                align: 'left'
+                            }
                             }
                         },
-
-                        expandAndCollapse: true,
-                        animationDuration: 550,
-                        animationDurationUpdate: 750
+                    animationDurationUpdate: 750
                     }
                 ]
             });
-    });
+        });
 
 </script>
