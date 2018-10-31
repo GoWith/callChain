@@ -15,6 +15,7 @@ import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.Elements;
 import java.util.Set;
 
@@ -83,69 +84,149 @@ public class Process extends AbstractProcessor {
         return true;
     }
 
-    private JCTree.JCMethodDecl addCall(JCTree.JCMethodDecl jcMethodDecl,JCTree.JCClassDecl jcClassDecl){
-
-        String classFullName = null;
-        try {
-            classFullName = jcClassDecl.sym.fullname.toString();
-        } catch (Exception e) {
-            return jcMethodDecl;
+    JCTree.JCStatement execute(JCTree.JCStatement statement, final String key){
+        if (!check(statement.getKind())) {
+            return statement;
         }
-        String methodName = jcMethodDecl.getName().toString();
-        String key = classFullName+"."+methodName;
-        JCTree.JCBlock body = jcMethodDecl.getBody();
-        List<JCTree.JCStatement> statements1 = body.getStatements();
-        ListBuffer<JCTree.JCStatement> statements = new ListBuffer<>();
-        JCTree.JCFieldAccess select = treeMaker.Select(treeMaker.Select(treeMaker.Ident(names.fromString("cn.fireface.call.core.utils")), names.fromString("LogPool")), names.fromString("startLog"));
-        JCTree.JCMethodInvocation test = treeMaker.Apply(List.<JCTree.JCExpression>nil(), select, List.<JCTree.JCExpression>of(treeMaker.Literal(key)));
-//        JCTree.JCMethodInvocation test = treeMaker.Apply(List.nil(), select, List.of(treeMaker.Literal("test111")));
+        statement.accept(new JCTree.Visitor() {
+            @Override
+            public void visitTry(JCTree.JCTry jcTry) {
+                JCTree.JCBlock tryBody = jcTry.body;
+                jcTry.body = buildNewJcBlock(tryBody, key);
+                List<JCTree.JCCatch> catches = jcTry.getCatches();
+                for (JCTree.JCCatch aCatch : catches) {
+                    JCTree.JCBlock catchBody = aCatch.body;
+                    aCatch.body= buildNewJcBlock(catchBody, key);
+                }
+            }
 
+            @Override
+            public void visitIf(JCTree.JCIf jcIf) {
+                JCTree.JCStatement thenpart = jcIf.thenpart;
+                if (check(thenpart.getKind())) {
+                    jcIf.thenpart = execute(thenpart,key);
+                }else {
+                    JCTree.JCBlock thenBody = (JCTree.JCBlock) thenpart;
+                    jcIf.thenpart= buildNewJcBlock(thenBody, key);
+                }
+                JCTree.JCStatement elseStatement = jcIf.getElseStatement();
+                if (elseStatement!=null) {
+                    if (check(elseStatement.getKind())) {
+                        jcIf.elsepart = execute(elseStatement,key);
+                    }else {
+                        JCTree.JCBlock elseBody = (JCTree.JCBlock) elseStatement;
+                        jcIf.elsepart = buildNewJcBlock(elseBody, key);
+                    }
+                }
+                System.out.println("");
+            }
+
+
+            @Override
+            public void visitForLoop(JCTree.JCForLoop jcForLoop) {
+                JCTree.JCStatement body = jcForLoop.body;
+                if (check(body.getKind())) {
+                    jcForLoop.body = execute(body,key);
+                }else {
+                    JCTree.JCBlock thenBody = (JCTree.JCBlock) body;
+                    jcForLoop.body= buildNewJcBlock(thenBody, key);
+                }
+            }
+
+            @Override
+            public void visitForeachLoop(JCTree.JCEnhancedForLoop jcEnhancedForLoop) {
+                JCTree.JCStatement body = jcEnhancedForLoop.body;
+                if (check(body.getKind())) {
+                    jcEnhancedForLoop.body = execute(body,key);
+                }else {
+                    JCTree.JCBlock thenBody = (JCTree.JCBlock) body;
+                    jcEnhancedForLoop.body= buildNewJcBlock(thenBody, key);
+                }
+            }
+
+            @Override
+            public void visitCatch(JCTree.JCCatch jcCatch) {
+                JCTree.JCBlock body = jcCatch.body;
+                JCTree.JCBlock body1 = buildNewJcBlock(body, key);
+                jcCatch.body=body1;
+            }
+        });
+        return statement;
+    }
+
+    private JCTree.JCBlock buildNewJcBlock(JCTree.JCBlock body, String key) {
+        List<JCTree.JCStatement> statements = body.getStatements();
+
+        ListBuffer<JCTree.JCStatement> jcStatements = new ListBuffer<>();
+
+        for (JCTree.JCStatement jcStatement : statements) {
+            if (check(jcStatement.getKind())) {
+                JCTree.JCStatement execute = execute(jcStatement, key);
+                jcStatements=jcStatements.append(execute);
+                continue;
+            }
+            if (jcStatement.getKind()== Tree.Kind.RETURN) {
+                JCTree.JCExpressionStatement jcExpressionStatement = buildEndCall(key);
+                jcStatements=jcStatements.append(jcExpressionStatement);
+            }
+            jcStatements=jcStatements.append(jcStatement);
+        }
+        return treeMaker.Block(0, jcStatements.toList());
+    }
+
+    private boolean check(JCTree.Kind kind){
+        return kind== Tree.Kind.TRY ||
+                kind == Tree.Kind.IF||
+                kind == Tree.Kind.FOR_LOOP||
+                kind == Tree.Kind.CATCH;
+    }
+
+
+
+
+    private JCTree.JCExpressionStatement buildEndCall(String key){
         JCTree.JCFieldAccess selectEnd = treeMaker.Select(treeMaker.Select(treeMaker.Ident(names.fromString("cn.fireface.call.core.utils")), names.fromString("LogPool")), names.fromString("endLog"));
         JCTree.JCMethodInvocation testEnd = treeMaker.Apply(List.<JCTree.JCExpression>nil(), selectEnd, List.<JCTree.JCExpression>of(treeMaker.Literal(key)));
         JCTree.JCExpressionStatement exec = treeMaker.Exec(testEnd);
+        return exec;
+    }
 
-        List<JCTree.JCStatement> jcStatements = nil();
 
-        for (int i = 0; i < statements1.size(); i++) {
-            if(statements1.get(i).toString().contains("return ")||statements1.get(i).toString().contains("return;")){
-                jcStatements = jcStatements.append(exec);
+    private JCTree.JCMethodDecl addCall(JCTree.JCMethodDecl jcMethodDecl,JCTree.JCClassDecl jcClassDecl){
+
+        String key = getKey(jcMethodDecl, jcClassDecl);
+
+        JCTree.JCBlock body = jcMethodDecl.getBody();
+        ListBuffer<JCTree.JCStatement> statementBuffer = new ListBuffer<>();
+        JCTree.JCExpressionStatement startCallStatement = buildStartCall(key);
+        JCTree.JCExpressionStatement endCallStatement = buildEndCall(key);
+        List<JCTree.JCStatement> OldStatements = body.getStatements();
+        JCTree returnType = jcMethodDecl.getReturnType();
+        if (returnType.type.getKind() == TypeKind.VOID) {
+            statementBuffer.append(startCallStatement).appendArray(OldStatements.toArray(new JCTree.JCStatement[OldStatements.size()])).append(endCallStatement);
+        }else {
+            statementBuffer.append(startCallStatement);
+            for (JCTree.JCStatement jcStatement : OldStatements) {
+                if(jcStatement.getKind()== Tree.Kind.RETURN){
+                    statementBuffer.append(endCallStatement).append(jcStatement);
+                    continue;
+                }
+                statementBuffer.append(execute(jcStatement,key));
             }
-            jcStatements = jcStatements.append(statements1.get(i));
         }
-        if (jcStatements.size() == statements1.size()) {
-            jcStatements = jcStatements.append(exec);
-        }
-
-        statements.append(treeMaker.Exec(test)).appendArray(jcStatements.toArray(new JCTree.JCStatement[jcStatements.size()]));
-
-//        JCTree.JCFieldAccess selectEnd = treeMaker.Select(treeMaker.Select(treeMaker.Ident(names.fromString("utils")), names.fromString("LogPool")), names.fromString("endLog"));
-//        JCTree.JCMethodInvocation testEnd = treeMaker.Apply(List.nil(), selectEnd, List.of(treeMaker.Literal(key)));
-//        statements.append(treeMaker.Exec(testEnd));
-
-        JCTree.JCBlock body1 = treeMaker.Block(0, statements.toList());
+        JCTree.JCBlock body1 = treeMaker.Block(0, statementBuffer.toList());
         return treeMaker.MethodDef(jcMethodDecl.getModifiers(),jcMethodDecl.getName(),jcMethodDecl.restype, jcMethodDecl.getTypeParameters(),jcMethodDecl.getParameters(),jcMethodDecl.getThrows(),body1,jcMethodDecl.defaultValue);
     }
 
-//    private JCTree.JCMethodDecl addLog(JCTree.JCMethodDecl jcMethodDecl){
-//
-//        JCTree.JCBlock body = jcMethodDecl.getBody();
-//        List<JCTree.JCStatement> statements1 = body.getStatements();
-//        ListBuffer<JCTree.JCStatement> statements = new ListBuffer<>();
-//        JCTree.JCFieldAccess select = treeMaker.Select(treeMaker.Select(treeMaker.Ident(names.fromString("System")), names.fromString("out")), names.fromString("println"));
-//        JCTree.JCMethodInvocation test = treeMaker.Apply(nil(), select, List.of(treeMaker.Literal("test111")));
-//        statements.append(treeMaker.Exec(test)).appendArray(statements1.toArray(new JCTree.JCStatement[statements1.size()]));
-//        JCTree.JCBlock body1 = treeMaker.Block(0, statements.toList());
-////        return treeMaker.MethodDef(jcMethodDecl.getModifiers(),names.fromString(jcMethodDecl.getName().toString()+"$Proxy"),jcMethodDecl.restype, jcMethodDecl.getTypeParameters(),jcMethodDecl.getParameters(),jcMethodDecl.getThrows(),jcMethodDecl.body,jcMethodDecl.defaultValue);
-//        return treeMaker.MethodDef(jcMethodDecl.getModifiers(),jcMethodDecl.getName(),jcMethodDecl.restype, jcMethodDecl.getTypeParameters(),jcMethodDecl.getParameters(),jcMethodDecl.getThrows(),body1,jcMethodDecl.defaultValue);
-//    }
-//    private JCTree.JCMethodDecl makeGetterMethodDecl(JCTree.JCVariableDecl jcVariableDecl) {
-//        ListBuffer<JCTree.JCStatement> statements = new ListBuffer<>();
-//        statements.append(treeMaker.Return(treeMaker.Select(treeMaker.Ident(names.fromString("this")), jcVariableDecl.getName())));
-//        JCTree.JCBlock body = treeMaker.Block(0, statements.toList());
-//        return treeMaker.MethodDef(treeMaker.Modifiers(Flags.PUBLIC), getNewMethodName(jcVariableDecl.getName()), jcVariableDecl.vartype, nil(), nil(), nil(), body, null);
-//    }
-//    private Name getNewMethodName(Name name) {
-//        String s = name.toString();
-//        return names.fromString("get" + s.substring(0, 1).toUpperCase() + s.substring(1, name.length()));
-//    }
+    private String getKey(JCTree.JCMethodDecl jcMethodDecl, JCTree.JCClassDecl jcClassDecl) {
+        String classFullName = jcClassDecl.sym.fullname.toString();
+        String methodName = jcMethodDecl.getName().toString();
+        return classFullName+"."+methodName;
+    }
+
+    private JCTree.JCExpressionStatement buildStartCall(String key) {
+        JCTree.JCFieldAccess select = treeMaker.Select(treeMaker.Select(treeMaker.Ident(names.fromString("cn.fireface.call.core.utils")), names.fromString("LogPool")), names.fromString("startLog"));
+        JCTree.JCMethodInvocation test = treeMaker.Apply(List.<JCTree.JCExpression>nil(), select, List.<JCTree.JCExpression>of(treeMaker.Literal(key)));
+        return treeMaker.Exec(test);
+    }
 }
