@@ -57,11 +57,6 @@ public class Process extends AbstractProcessor {
                     List<JCTree.JCVariableDecl> jcVariableDeclList = nil();
                     List<JCTree> myDefs = nil();
                     for (JCTree tree : jcClassDecl.defs) {
-                        if (tree.getKind().equals(Tree.Kind.VARIABLE)) {
-                            JCTree.JCVariableDecl jcVariableDecl = (JCTree.JCVariableDecl) tree;
-                            jcVariableDeclList = jcVariableDeclList.append(jcVariableDecl);
-                            myDefs = myDefs.append(tree);
-                        }
                         if(tree.getKind().equals(Tree.Kind.METHOD)){
                             JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) tree;
                             if (jcMethodDecl.getName().toString().equals("<init>")){
@@ -69,14 +64,11 @@ public class Process extends AbstractProcessor {
                                 continue;
                             }
                             myDefs = myDefs.append(addCall(jcMethodDecl,jcClassDecl));
+                        }else {
+                            myDefs=myDefs.append(tree);
                         }
                     }
                     jcClassDecl.defs = myDefs;
-                    System.out.println(jcClassDecl.toString());
-//                    jcVariableDeclList.forEach(jcVariableDecl -> {
-//                        messager.printMessage(Diagnostic.Kind.NOTE, jcVariableDecl.getName() + " has been processed");
-//                        jcClassDecl.defs = jcClassDecl.defs.prepend(makeGetterMethodDecl(jcVariableDecl));
-//                    });
                     super.visitClassDef(jcClassDecl);
                 }
             });
@@ -194,28 +186,32 @@ public class Process extends AbstractProcessor {
 
     private JCTree.JCMethodDecl addCall(JCTree.JCMethodDecl jcMethodDecl,JCTree.JCClassDecl jcClassDecl){
 
-        String key = getKey(jcMethodDecl, jcClassDecl);
+        try {
+            String key = getKey(jcMethodDecl, jcClassDecl);
 
-        JCTree.JCBlock body = jcMethodDecl.getBody();
-        ListBuffer<JCTree.JCStatement> statementBuffer = new ListBuffer<>();
-        JCTree.JCExpressionStatement startCallStatement = buildStartCall(key);
-        JCTree.JCExpressionStatement endCallStatement = buildEndCall(key);
-        List<JCTree.JCStatement> OldStatements = body.getStatements();
-        JCTree returnType = jcMethodDecl.getReturnType();
-        if (returnType.type.getKind() == TypeKind.VOID) {
-            statementBuffer.append(startCallStatement).appendArray(OldStatements.toArray(new JCTree.JCStatement[OldStatements.size()])).append(endCallStatement);
-        }else {
-            statementBuffer.append(startCallStatement);
-            for (JCTree.JCStatement jcStatement : OldStatements) {
-                if(jcStatement.getKind()== Tree.Kind.RETURN){
-                    statementBuffer.append(endCallStatement).append(jcStatement);
-                    continue;
+            JCTree.JCBlock body = jcMethodDecl.getBody();
+            ListBuffer<JCTree.JCStatement> statementBuffer = new ListBuffer<>();
+            JCTree.JCExpressionStatement startCallStatement = buildStartCall(key);
+            JCTree.JCExpressionStatement endCallStatement = buildEndCall(key);
+            List<JCTree.JCStatement> OldStatements = body.getStatements();
+            JCTree returnType = jcMethodDecl.getReturnType();
+            if (returnType.type.getKind() == TypeKind.VOID) {
+                statementBuffer.append(startCallStatement).appendArray(OldStatements.toArray(new JCTree.JCStatement[OldStatements.size()])).append(endCallStatement);
+            }else {
+                statementBuffer.append(startCallStatement);
+                for (JCTree.JCStatement jcStatement : OldStatements) {
+                    if(jcStatement.getKind()== Tree.Kind.RETURN){
+                        statementBuffer.append(endCallStatement).append(jcStatement);
+                        continue;
+                    }
+                    statementBuffer.append(execute(jcStatement,key));
                 }
-                statementBuffer.append(execute(jcStatement,key));
             }
+            JCTree.JCBlock body1 = treeMaker.Block(0, statementBuffer.toList());
+            return treeMaker.MethodDef(jcMethodDecl.getModifiers(),jcMethodDecl.getName(),jcMethodDecl.restype, jcMethodDecl.getTypeParameters(),jcMethodDecl.getParameters(),jcMethodDecl.getThrows(),body1,jcMethodDecl.defaultValue);
+        } catch (Exception e) {
+            return jcMethodDecl;
         }
-        JCTree.JCBlock body1 = treeMaker.Block(0, statementBuffer.toList());
-        return treeMaker.MethodDef(jcMethodDecl.getModifiers(),jcMethodDecl.getName(),jcMethodDecl.restype, jcMethodDecl.getTypeParameters(),jcMethodDecl.getParameters(),jcMethodDecl.getThrows(),body1,jcMethodDecl.defaultValue);
     }
 
     private String getKey(JCTree.JCMethodDecl jcMethodDecl, JCTree.JCClassDecl jcClassDecl) {
