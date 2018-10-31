@@ -16,18 +16,6 @@
             <version>1.8</version>
         </dependency>
     </dependencies>
-    <distributionManagement>
-        <repository>
-            <id>jd-central</id>
-            <name>libs-releases</name>
-            <url>http://artifactory.jd.com/libs-releases-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>jd-snapshots</id>
-            <name>libs-snapshots</name>
-            <url>http://artifactory.jd.com/libs-snapshots-local</url>
-        </snapshotRepository>
-    </distributionManagement>
     <build>
         <plugins>
             <plugin>
