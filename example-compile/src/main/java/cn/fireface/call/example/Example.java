@@ -1,4 +1,6 @@
-package cn.fireface.call.example.compile;
+package cn.fireface.call.example;
+
+import cn.fireface.call.example.compile.ExampleService;
 
 /**
  * Created by maoyi on 2018/10/29.

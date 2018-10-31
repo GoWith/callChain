@@ -46,7 +46,8 @@ public class Process extends AbstractProcessor {
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(CallChain.class);
+//        Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(CallChain.class);
+        Set<? extends Element> set = roundEnv.getRootElements();
         for (Element element : set) {
             JCTree jcTree = trees.getTree(element);
             jcTree.accept(new TreeTranslator() {
