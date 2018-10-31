@@ -12,5 +12,9 @@ public class LogGraph {
     public static void addGragh(CallTree tCallTree){
         String key = tCallTree.getRoot().getKey();
         graph.putIfAbsent(key, tCallTree);
+        CallTree tree = graph.get(key);
+        if(tCallTree.getRoot().getCallInfo().getGapTime() > tree.getRoot().getCallInfo().getGapTime()){
+            graph.put(key,tCallTree);
+        }
     }
 }

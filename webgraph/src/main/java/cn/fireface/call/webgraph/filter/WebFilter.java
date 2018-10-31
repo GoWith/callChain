@@ -1,24 +1,19 @@
 package cn.fireface.call.webgraph.filter;
 
-import cn.fireface.call.core.utils.CallNode;
-import cn.fireface.call.core.utils.CallTree;
-import cn.fireface.call.core.utils.LogGraph;
-import com.alibaba.fastjson.JSON;
+import cn.fireface.call.webgraph.filter.strategy.FilterStrategy;
+import cn.fireface.call.webgraph.filter.strategy.factory.FilterStrategyFactory;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by maoyi on 2018/10/26.
  * don't worry , be happy
  */
-public class WebFilter implements Filter{
+public class WebFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
 
@@ -28,10 +23,10 @@ public class WebFilter implements Filter{
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest request;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
-        if (servletRequest instanceof HttpServletRequest){
-            request=(HttpServletRequest)servletRequest;
-        }else {
-            filterChain.doFilter(servletRequest,servletResponse);
+        if (servletRequest instanceof HttpServletRequest) {
+            request = (HttpServletRequest) servletRequest;
+        } else {
+            filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
         String pathInfo = request.getPathInfo();
@@ -43,7 +38,7 @@ public class WebFilter implements Filter{
 
         String uriValue = requestURI.substring(10);
 
-        if("".equalsIgnoreCase(uriValue) || "/".equalsIgnoreCase(uriValue)){
+        if ("".equalsIgnoreCase(uriValue) || "/".equalsIgnoreCase(uriValue)) {
             response.sendRedirect("/callChain/resource/index.html");
             return;
         }
@@ -53,17 +48,13 @@ public class WebFilter implements Filter{
         }
 
         if (uriValue.contains(".json")) {
-            ConcurrentHashMap<String, CallTree> graph = LogGraph.graph;
-            String key = "";
-            for (Map.Entry<String, CallTree> entry : graph.entrySet()) {
-                key = entry.getKey();
+            Map<String, String[]> parameterMap = request.getParameterMap();
+            FilterStrategy strategy = FilterStrategyFactory.produce(uriValue);
+            String execute = null;
+            if (null != strategy) {
+                execute = strategy.execute(parameterMap);
             }
-            CallTree callTree = graph.get(key);
-            TreeView parse = null;
-            if (callTree !=null) {
-                parse = parse(callTree.getRoot());
-            }
-            response.getWriter().print(JSON.toJSONString(parse));
+            response.getWriter().print(execute);
             return;
         }
         if ("".equals(servletPath) || null == servletPath) {
@@ -71,26 +62,7 @@ public class WebFilter implements Filter{
             return;
         }
 
-        returnResourceFile(uriValue.substring(uriValue.lastIndexOf("/")),uriValue, (HttpServletResponse) servletResponse);
-    }
-
-    private TreeView parse(CallNode node){
-        if(node == null){return null;}
-        TreeView view = new TreeView();
-        view.setValue(node.getCallInfo().getGapTime());
-        String key1 = node.getKey();
-        String[] split = key1.split("\\.");
-        String key = "["+split[split.length-2]+"."+split[split.length-1]+":"+view.getValue()+"]";
-        view.setName(key);
-        List<TreeView> treeViews =null;
-        if (node.getChildList()!=null) {
-            treeViews =  new ArrayList<>();
-            for (CallNode callNode : node.getChildList()) {
-                treeViews.add(parse(callNode));
-            }
-        }
-        view.setChildren(treeViews);
-        return view;
+        returnResourceFile(uriValue.substring(uriValue.lastIndexOf("/")), uriValue, (HttpServletResponse) servletResponse);
     }
 
 
@@ -127,7 +99,7 @@ public class WebFilter implements Filter{
             response.sendRedirect(uri + "/index.html");
             return;
         }
-        if(fileName.endsWith(".svg")){
+        if (fileName.endsWith(".svg")) {
             response.setContentType("image/svg+xml");
         }
         if (fileName.endsWith(".css")) {
@@ -137,6 +109,7 @@ public class WebFilter implements Filter{
         }
         response.getWriter().write(text);
     }
+
     @Override
     public void destroy() {
 

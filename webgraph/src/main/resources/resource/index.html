@@ -10,6 +10,9 @@
     <script src="/callChain/resource/js/jquery.min.js"></script>
     <script src="/callChain/resource/js/esl.js"></script>
     <script src="/callChain/resource/js/config.js"></script>
+
+    <link href="/callChain/resource/selector/jquery.searchableSelect.css" rel="stylesheet" type="text/css">
+    <script src="/callChain/resource/selector/jquery.searchableSelect.js"></script>
 </head>
 <body>
 <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
@@ -21,59 +24,89 @@
         height: 100%;
     }
 </style>
-<div id="main"></div>
+<div style="width: 80%;text-align: center;z-index: 10">
+    <div id="classInfo" style="display: inline-block; margin-right: 40px;">
+        <span style="width: 720px;">
+            <select id="callChainKey" name="beanName" style="width: 720px;height: 35px" onchange="callTree()">
+                <option value="选择类" selected="selected">选择类</option>
+            </select>
+        </span>
+    </div>
+</div>
+<div id="main" style="z-index: 1"></div>
 </body>
 </html>
 <script>
-    var myChart = echarts.init(document.getElementById('main'));
-    myChart.showLoading();
+
+    $(function () {
+        var url = "/callChain/init.json";
+        var param = {}
+        jQuery.post(url, param, function (data) {
+            $("#callChainKey").empty().append('<option value="选择服务" selected="selected">选择服务</option>');
+
+            data.forEach(function (item) {
+                $("#callChainKey").append("<option value='" + item + "'>" + item + "</option>");
+            })
+            $('#callChainKey').searchableSelect({
+                afterSelectItem: callTree
+            });
+        }, "json");
+    })
+
+    function callTree() {
+        var myChart = echarts.init(document.getElementById('main'));
+        var callChainKey = $("#callChainKey").val();
+        if (callChainKey ==="选择服务"){
+            return "";
+        }
+        myChart.showLoading();
 //    $.get('callTree.json', function (data) {
-    $.getJSON('callTree.json')
-        .done(function (data) {
-        myChart.hideLoading();
-            myChart.setOption(option = {
-                tooltip: {
-                    trigger: 'item',
-                    triggerOn: 'mousemove'
-                },
-                series: [
-                    {
-                        type: 'tree',
+        $.getJSON('/callChain/tree.json?key='+callChainKey)
+            .done(function (data) {
+                myChart.hideLoading();
+                myChart.setOption(option = {
+                    tooltip: {
+                        trigger: 'item',
+                        triggerOn: 'mousemove'
+                    },
+                    series: [
+                        {
+                            type: 'tree',
 
-                        data: [data],
+                            data: [data],
 
-                        top: '1%',
-                        left: '20%',
-                        bottom: '1%',
-                        right: '20%',
+                            top: '1%',
+                            left: '20%',
+                            bottom: '1%',
+                            right: '20%',
 
-                        symbolSize: 7,
+                            symbolSize: 7,
 
-                        label: {
-                            normal: {
-                                position: 'left',
-                                verticalAlign: 'middle',
-                                align: 'right',
-                                fontSize: 9
-                            }
-                        },
-
-                        leaves: {
                             label: {
                                 normal: {
-                                    position: 'right',
+                                    position: 'left',
                                     verticalAlign: 'middle',
-                                    align: 'left'
+                                    align: 'right',
+                                    fontSize: 9
                                 }
-                            }
-                        },
+                            },
 
-                        expandAndCollapse: true,
-                        animationDuration: 550,
-                        animationDurationUpdate: 750
-                    }
-                ]
+                            leaves: {
+                                label: {
+                                    normal: {
+                                        position: 'right',
+                                        verticalAlign: 'middle',
+                                        align: 'left'
+                                    }
+                                }
+                            },
+
+                            expandAndCollapse: true,
+                            animationDuration: 550,
+                            animationDurationUpdate: 750
+                        }
+                    ]
+                });
             });
-    });
-
+    }
 </script>

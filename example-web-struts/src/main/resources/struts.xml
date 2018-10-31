@@ -9,5 +9,11 @@
         <action name="index" class="cn.fireface.call.web.action.HelloAction" method="hello">
             <result>index.jsp</result>
         </action>
+        <action name="hi" class="cn.fireface.call.web.action.HelloAction" method="hi">
+            <result>index.jsp</result>
+        </action>
+        <action name="hello" class="cn.fireface.call.web.action.HelloAction" method="hello">
+            <result>index.jsp</result>
+        </action>
     </package>
 </struts>
