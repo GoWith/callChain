@@ -22,7 +22,7 @@ public class WebFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
-            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("WEB-INF/api/check/config.properties");
+            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("WEB-INF/call/chain/config.properties");
             if (resourceAsStream!=null) {
                 Properties prop = new Properties();
                 prop.load(resourceAsStream);
