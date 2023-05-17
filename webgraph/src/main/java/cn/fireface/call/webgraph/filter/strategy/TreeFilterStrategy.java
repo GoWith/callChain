@@ -32,7 +32,7 @@ public class TreeFilterStrategy implements FilterStrategy{
     private static TreeView parse(CallNode node){
         if(node == null){return null;}
         TreeView view = new TreeView();
-        view.setValue(node.getCallInfo().getGapTime());
+        view.setValue(node.getCallInfo().getDuration());
         String key1 = node.getKey();
         String[] split = key1.split("\\.");
         String key = "["+split[split.length-2]+"."+split[split.length-1]+":"+view.getValue()+"]";

@@ -80,34 +80,37 @@ public class Process extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 //        Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(CallChain.class);
-        Set<? extends Element> set = roundEnv.getRootElements();
-        for (Element element : set) {
+        Set<? extends Element> elements = roundEnv.getRootElements();
+        for (Element element : elements) {
             JCTree jcTree = trees.getTree(element);
             treeMaker.pos = jcTree.pos;
-            jcTree.accept(new TreeTranslator() {
-                @Override
-                public void visitClassDef(JCTree.JCClassDecl jcClassDecl) {
-                    List<JCTree.JCVariableDecl> jcVariableDeclList = nil();
-                    List<JCTree> myDefs = nil();
-                    for (JCTree tree : jcClassDecl.defs) {
-                        if (tree.getKind().equals(Tree.Kind.METHOD)) {
-                            JCTree.JCMethodDecl jcMethodDecl = (JCTree.JCMethodDecl) tree;
-                            if (jcMethodDecl.getName().toString().equals("<init>")) {
-                                myDefs = myDefs.append(tree);
-                                continue;
-                            }
-                            myDefs = myDefs.append(addCall(jcMethodDecl, jcClassDecl));
-                        } else {
-                            myDefs = myDefs.append(tree);
-                        }
-                    }
-                    jcClassDecl.defs = myDefs;
-                    super.visitClassDef(jcClassDecl);
-                }
-            });
+            jcTree.accept(new ClassDefVisitor());
         }
         return true;
     }
+
+    private class ClassDefVisitor extends TreeTranslator {
+        @Override
+        public void visitClassDef(JCTree.JCClassDecl jcClassDecl) {
+//            List<JCTree.JCVariableDecl> variableDecls = List.nil();
+            List<JCTree> methodDefs = List.nil();
+            for (JCTree tree : jcClassDecl.defs) {
+                if (tree.getKind().equals(Tree.Kind.METHOD)) {
+                    JCTree.JCMethodDecl methodDecl = (JCTree.JCMethodDecl) tree;
+                    if (methodDecl.getName().toString().equals("<init>")) {
+                        methodDefs = methodDefs.append(tree);
+                        continue;
+                    }
+                    methodDefs = methodDefs.append(addCall(methodDecl, jcClassDecl));
+                } else {
+                    methodDefs = methodDefs.append(tree);
+                }
+            }
+            jcClassDecl.defs = methodDefs;
+            super.visitClassDef(jcClassDecl);
+        }
+    }
+
 
     /**
      * 执行
@@ -248,67 +251,26 @@ public class Process extends AbstractProcessor {
      * @param jcClassDecl  jc类decl
      * @return {@link JCTree.JCMethodDecl}
      */
-    private JCTree.JCMethodDecl addCall(JCTree.JCMethodDecl jcMethodDecl, JCTree.JCClassDecl jcClassDecl) {
+  private JCTree.JCMethodDecl addCall(JCTree.JCMethodDecl jcMethodDecl, JCTree.JCClassDecl jcClassDecl) {
 
-        try {
-            String key = getKey(jcMethodDecl, jcClassDecl);
+    try {
+        String key = getKey(jcMethodDecl, jcClassDecl);
+        JCTree.JCBlock body = jcMethodDecl.getBody();
 
-            JCTree.JCBlock body = jcMethodDecl.getBody();
-            if (body == null) {
-                return jcMethodDecl;
-            }
-            JCTree.JCExpressionStatement startCallStatement = buildStartCall(key);
-            JCTree.JCExpressionStatement endCallStatement = buildEndCall(key);
-
-
-            jcMethodDecl.body = treeMaker.Block(0, List.of(
-                    startCallStatement,
-                    treeMaker.Try(
-                            body,
-                            List.nil(),
-//                            List.of(treeMaker.Catch(
-//                                    treeMaker.VarDef(
-//                                            treeMaker.Modifiers(0),
-//                                            //名字
-//                                            getNameFromString("e"),
-//                                            //类型
-//                                            memberAccess("java.lang.Exception"),
-//                                            //初始化语句
-//                                            null
-//                                    ),
-//                                    treeMaker.Block(0, List.of(
-//                                            treeMaker.Throw(
-//                                                    // e 这个字符是catch块中定义的变量
-//                                                    treeMaker.Ident(getNameFromString("e"))
-//                                            )
-//                                    ))
-//                            )),
-                            treeMaker.Block(0, List.of(endCallStatement))
-                    )
-            ));
-            return jcMethodDecl;
-
-//            ListBuffer<JCTree.JCStatement> statementBuffer = new ListBuffer<>();
-//            List<JCTree.JCStatement> OldStatements = body.getStatements();
-//            JCTree returnType = jcMethodDecl.getReturnType();
-//            if (returnType.type.getKind() == TypeKind.VOID) {
-//                statementBuffer.append(startCallStatement).appendArray(OldStatements.toArray(new JCTree.JCStatement[OldStatements.size()])).append(endCallStatement);
-//            } else {
-//                statementBuffer.append(startCallStatement);
-//                for (JCTree.JCStatement jcStatement : OldStatements) {
-//                    if (jcStatement.getKind() == Tree.Kind.RETURN) {
-//                        statementBuffer.append(endCallStatement).append(jcStatement);
-//                        continue;
-//                    }
-//                    statementBuffer.append(execute(jcStatement, key));
-//                }
-//            }
-//            JCTree.JCBlock body1 = treeMaker.Block(0, statementBuffer.toList());
-//            return treeMaker.MethodDef(jcMethodDecl.getModifiers(), jcMethodDecl.getName(), jcMethodDecl.restype, jcMethodDecl.getTypeParameters(), jcMethodDecl.getParameters(), jcMethodDecl.getThrows(), body1, jcMethodDecl.defaultValue);
-        } catch (Exception e) {
+        if (body == null) {
             return jcMethodDecl;
         }
+
+        JCTree.JCExpressionStatement startCallStatement = buildStartCall(key);
+        JCTree.JCExpressionStatement endCallStatement = buildEndCall(key);
+        JCTree.JCTry tryBlock = treeMaker.Try(body, List.nil(), treeMaker.Block(0,List.of(endCallStatement)));
+        jcMethodDecl.body = treeMaker.Block(0, List.of(startCallStatement, tryBlock));
+
+        return jcMethodDecl;
+    } catch (Exception e) {
+        return jcMethodDecl;
     }
+}
 
     /**
      * 得到关键
@@ -336,10 +298,11 @@ public class Process extends AbstractProcessor {
     }
 
     /**
+     * 成员访问
      * 创建 域/方法 的多级访问, 方法的标识只能是最后一个
      *
-     * @param components
-     * @return
+     * @param components 组件
+     * @return {@link JCTree.JCExpression}
      */
     private JCTree.JCExpression memberAccess(String components) {
         String[] componentArray = components.split("\\.");
@@ -351,10 +314,11 @@ public class Process extends AbstractProcessor {
     }
 
     /**
+     * 得到字符串名称
      * 根据字符串获取Name，（利用Names的fromString静态方法）
      *
-     * @param s
-     * @return
+     * @param s 年代
+     * @return {@link com.sun.tools.javac.util.Name}
      */
     private com.sun.tools.javac.util.Name getNameFromString(String s) {
         return names.fromString(s);
