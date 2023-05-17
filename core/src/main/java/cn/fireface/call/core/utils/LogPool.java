@@ -1,5 +1,8 @@
 package cn.fireface.call.core.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by maoyi on 2018/10/25.
  * don't worry , be happy
@@ -7,7 +10,16 @@ package cn.fireface.call.core.utils;
 public class LogPool {
     private static ThreadLocal<CallTree> local = new ThreadLocal<>();
 
+    private static List<String> excludes = new ArrayList<>();
+
+    public static void addExcludes(List<String> args ){
+        excludes.addAll(args);
+    }
+
     public static void startLog(String key) {
+        if(excludes.contains(key)){
+            return;
+        }
         CallTree callTree = local.get();
         if (null == callTree) {
             callTree = new CallTree();
@@ -26,17 +38,22 @@ public class LogPool {
     }
 
     public static void endLog(String key) {
+        if(excludes.contains(key)){
+            return;
+        }
         CallTree callTree = local.get();
         CallNode last = callTree.getLast();
         CallInfo callInfo = last.getCallInfo();
         callInfo.setEndTime(System.currentTimeMillis());
-        if (last.getParent() != null)
+        if (last.getParent() != null) {
             callTree.setLast(last.getParent());
-        else refresh();
+        } else {
+            refresh();
+        }
     }
 
     private static void refresh() {
-        LogGraph.addGragh(local.get());
+        LogGraph.addGraph(local.get());
         local.remove();
     }
 }

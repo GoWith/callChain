@@ -9,12 +9,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LogGraph {
     static public ConcurrentHashMap<String,CallTree> graph = new ConcurrentHashMap<>();
 
-    public static void addGragh(CallTree tCallTree){
+    public static void addGraph(CallTree tCallTree){
         String key = tCallTree.getRoot().getKey();
         graph.putIfAbsent(key, tCallTree);
         CallTree tree = graph.get(key);
         if(tCallTree.getRoot().getCallInfo().getGapTime() > tree.getRoot().getCallInfo().getGapTime()){
             graph.put(key,tCallTree);
         }
+    }
+
+    public static void clearGraph(){
+        graph.clear();
+    }
+
+    public static void clearGraphByKey(String key){
+        graph.remove(key);
     }
 }

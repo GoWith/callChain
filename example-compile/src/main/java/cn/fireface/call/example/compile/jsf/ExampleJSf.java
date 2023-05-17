@@ -11,4 +11,7 @@ public class ExampleJSf {
     public void jsf(){
         System.out.println("jsf");
     }
+
+    public void testException(){
+            System.out.println("");}
 }

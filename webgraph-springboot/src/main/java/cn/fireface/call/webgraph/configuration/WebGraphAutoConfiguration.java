@@ -19,7 +19,7 @@ public class WebGraphAutoConfiguration {
      * 注册一个Druid内置的StatViewServlet，用于展示Druid的统计信息。
      */
     @Bean
-    FilterRegistrationBean filterRegistrationBean() {
+    FilterRegistrationBean callChainFilterRegistrationBean() {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
         filterRegistrationBean.setFilter(new WebFilter());
         filterRegistrationBean.addUrlPatterns("/callChain/*");

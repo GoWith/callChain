@@ -1,13 +1,18 @@
 package cn.fireface.call.webgraph.filter;
 
+import cn.fireface.call.core.utils.LogPool;
 import cn.fireface.call.webgraph.filter.strategy.FilterStrategy;
 import cn.fireface.call.webgraph.filter.strategy.factory.FilterStrategyFactory;
+import com.alibaba.fastjson.JSON;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by maoyi on 2018/10/26.
@@ -16,7 +21,20 @@ import java.util.Map;
 public class WebFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
+        try {
+            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("WEB-INF/api/check/config.properties");
+            if (resourceAsStream!=null) {
+                Properties prop = new Properties();
+                prop.load(resourceAsStream);
+                System.out.println(JSON.toJSONString(prop));
+                String keys = prop.getProperty("call.chain.exclude.keys");
+                System.out.println(keys);
+                LogPool.addExcludes(Arrays.asList(keys.split(",")));
 
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
