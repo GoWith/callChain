@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- 引入 ECharts 文件 -->
     <script src="/callChain/resource/js/echarts.min.js"></script>
     <script src="/callChain/resource/js/jquery.min.js"></script>
@@ -18,16 +18,15 @@
 <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
 <style>
     html, body, #main {
-        width: 110%;
+        width: 100%;
         padding: 0;
         margin: 0;
         height: 100%;
     }
-
 </style>
-<div style="width: 80%;text-align: center;z-index: 10;margin-top:40px">
+<div style="width: 80%;text-align: center;z-index: 10">
     <div id="classInfo" style="display: inline-block; margin-right: 40px;">
-        <span style="width: 800px;">
+        <span style="width: 720px;">
             <select id="callChainKey" name="beanName" style="width: 720px;height: 35px" onchange="callTree()">
                 <option value="选择类" selected="selected">选择类</option>
             </select>
@@ -71,37 +70,43 @@
                         triggerOn: 'mousemove'
                     },
                     series: [
-                    {
-                      type: 'tree',
-                      data: [data],
-                      top: '1%',
-                      left: '7%',
-                      bottom: '1%',
-                      right: '20%',
-                      symbolSize: 7,
-                      label: {
-                        position: 'left',
-                        verticalAlign: 'middle',
-                        align: 'right',
-                        fontSize: 9
-                      },
-                      leaves: {
-                        label: {
-                          position: 'right',
-                          verticalAlign: 'middle',
-                          align: 'left'
+                        {
+                            type: 'tree',
+
+                            data: [data],
+
+                            top: '1%',
+                            left: '20%',
+                            bottom: '1%',
+                            right: '20%',
+
+                            symbolSize: 7,
+
+                            label: {
+                                normal: {
+                                    position: 'left',
+                                    verticalAlign: 'middle',
+                                    align: 'right',
+                                    fontSize: 9
+                                }
+                            },
+
+                            leaves: {
+                                label: {
+                                    normal: {
+                                        position: 'right',
+                                        verticalAlign: 'middle',
+                                        align: 'left'
+                                    }
+                                }
+                            },
+
+                            expandAndCollapse: true,
+                            animationDuration: 550,
+                            animationDurationUpdate: 750
                         }
-                      },
-                      emphasis: {
-                        focus: 'descendant'
-                      },
-                      expandAndCollapse: true,
-                      animationDuration: 550,
-                      animationDurationUpdate: 750
-                    }
-                  ]
+                    ]
                 });
             });
     }
-
 </script>

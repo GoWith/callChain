@@ -8,16 +8,16 @@ import cn.fireface.springboot.call.manager.HelloManager;
  * don't worry , be happy
  */
 @CallChain
-public class HelloService {
+public class HelloService1 {
     public void sayHello() throws InterruptedException {
-        new HelloService1().sayHello();
+        new HelloService2().sayHello();
         new HelloManager().sayHello();
         new HelloManager().sayBye();
         Thread.sleep(10L);
         System.out.println("hello service  say : hello");
     }
     public void sayBye() throws InterruptedException {
-        new HelloService1().sayHello();
+        new HelloService2().sayHello();
         new HelloManager().sayHello();
         new HelloManager().sayBye();
         Thread.sleep(10L);
