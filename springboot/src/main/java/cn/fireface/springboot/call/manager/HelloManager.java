@@ -1,4 +1,4 @@
-package cn.fireface.call.manager;
+package cn.fireface.springboot.call.manager;
 
 import cn.fireface.call.core.proxy.CallChain;
 

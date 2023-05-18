@@ -162,7 +162,7 @@ public class WebFilter implements Filter {
      * @return {@link String}
      */
     protected String getFilePath(String fileName) {
-        return RESOURCE_PATH + fileName;
+        return RESOURCE_PATH + FLAG+ fileName;
     }
 
     /**
@@ -180,9 +180,7 @@ public class WebFilter implements Filter {
             filePath = getFilePath(fileName);
         }
 
-        if (filePath.endsWith(HTML)) {
-            response.setContentType("text/html; charset=utf-8");
-        } else if (fileName.endsWith(JPG)) {
+       if (fileName.endsWith(JPG)) {
             byte[] bytes = Utils.readByteArrayFromResource(filePath);
             if (bytes != null) {
                 response.getOutputStream().write(bytes);
@@ -193,7 +191,10 @@ public class WebFilter implements Filter {
                 response.sendRedirect(uri + INDEX_HTML);
                 return;
             }
-            if (fileName.endsWith(SVG)) {
+           if (filePath.endsWith(HTML)) {
+               response.setContentType("text/html; charset=utf-8");
+           }
+           if (fileName.endsWith(SVG)) {
                 response.setContentType(IMAGE_SVG_XML);
             } else if (fileName.endsWith(CSS)) {
                 response.setContentType(TEXT_CSS_CHARSET_UTF_8);

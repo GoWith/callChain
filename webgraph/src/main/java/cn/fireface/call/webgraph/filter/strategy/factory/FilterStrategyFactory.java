@@ -100,10 +100,11 @@ public class FilterStrategyFactory {
             if (!name1.endsWith(".class")) {
                 continue;
             }
-            Class<?> aClass = Class.forName(pkgName + "." + name1.substring(0, name1.length() - 6));
+            Class<?> aClass = Class.forName(pkgName.replace("/", ".") + "." + name1.substring(0, name1.length() - 6));
+//            Class<?> aClass = Class.forName(pkgName + "." + name1.substring(0, name1.length() - 6));
             if (FilterStrategy.class.isAssignableFrom(aClass) && !aClass.equals(FilterStrategy.class)) {
                 strategies.add((Class<? extends FilterStrategy>) aClass);
-                String key = name1.substring(0, name1.length() - 6).toLowerCase();
+                String key = name1.substring(0, name1.length() - 6-14).toLowerCase();
                 strategyPool.put(key, (Class<? extends FilterStrategy>) aClass);
             }
         }

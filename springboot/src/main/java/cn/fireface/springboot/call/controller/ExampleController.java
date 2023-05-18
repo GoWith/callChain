@@ -1,6 +1,6 @@
-package cn.fireface.call.controller;
+package cn.fireface.springboot.call.controller;
 
-import cn.fireface.call.service.HelloService;
+import cn.fireface.springboot.call.service.HelloService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 public class ExampleController {
-    @RequestMapping("/")
+    @RequestMapping("/index")
     public String index() throws InterruptedException {
         new HelloService().sayHello();
         new HelloService().sayBye();
