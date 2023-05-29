@@ -12,13 +12,19 @@ public class HelloService2 {
     public void sayHello() throws InterruptedException {
         new HelloManager().sayHello();
         new HelloManager().sayBye();
+        long start = System.currentTimeMillis();
         Thread.sleep(10L);
+        long end = System.currentTimeMillis();
+        System.out.println(end-start);
         System.out.println("hello service  say : hello");
     }
     public void sayBye() throws InterruptedException {
         new HelloManager().sayHello();
         new HelloManager().sayBye();
+        long start = System.currentTimeMillis();
         Thread.sleep(10L);
+        long end = System.currentTimeMillis();
+        System.out.println(end-start);
         System.out.println("hello service  say : bye");
     }
 }
